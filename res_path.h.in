@@ -1,0 +1,8 @@
+#pragma once
+
+namespace OglPlayground
+{
+
+const char* RESOURCES_ROOT_PATH = "@RESOURCES_ROOT_PATH@";
+  
+} // namespace OglPlayground

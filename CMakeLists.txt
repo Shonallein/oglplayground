@@ -45,12 +45,21 @@ custom_external_project(glfw)
 find_package(glfw REQUIRED)
 find_package(OpenGL REQUIRED)
 
-message(${GLFW_INCLUDE_DIR})
-include_directories(${GLFW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIRS})
+set(RESOURCES_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/res_path.h.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/res_path.h)
+
+include_directories(
+  ${GLFW_INCLUDE_DIR} 
+  ${OPENGL_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_BINARY_DIR})
 
 set(SOURCES
+  api.cpp
   gl_core_3_3.c
   main.cpp
+  program.cpp
 )
 add_executable(OglPlayground ${SOURCES})
 target_link_libraries(OglPlayground ${OPENGL_LIBRARIES} ${GLFW_LIBRARY} Xxf86vm pthread X11 Xrandr Xi)
