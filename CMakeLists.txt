@@ -1,65 +1,54 @@
-cmake_minimum_required (VERSION 2.8.12)
+cmake_minimum_required (VERSION 3.6)
 project (OglPlayground)
-set(CMAKE_CXX_FLAGS "-std=c++11")
 
-# External project setup
-set(THIRDPARTY_DIR ${CMAKE_BINARY_DIR}/thirdparty)
+# Thirdparty setup
+set(THIRDPARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+set(THIRDPARTY_INSTALL_DIR ${THIRDPARTY_DIR}/install)
+set(THIRDPARTY_BUILD_DIR ${THIRDPARTY_DIR}/build)
 set(CMAKE_PREFIX_PATH
-  ${THIRDPARTY_DIR}
+  ${THIRDPARTY_INSTALL_DIR}
+  ${THIRDPARTY_INSTALL_DIR}/lib/cmake
   ${CMAKE_PREFIX_PATH}
 )
 
-# External project configure macro
-macro(custom_external_project name)
-  set(_external_dir ${CMAKE_BINARY_DIR}/external_project/${name})
-  configure_file(
-	${name}.external_project.txt
-	${_external_dir}/CMakeLists.txt
-	[@ONLY]
-	)
-  file(MAKE_DIRECTORY ${_external_dir}/build)
-  execute_process(COMMAND ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR} ..
-    WORKING_DIRECTORY ${_external_dir}/build
-	RESULT_VARIABLE _res
-	OUTPUT_VARIABLE _output
-	ERROR_VARIABLE _err
-    )
-  message("${name} configure stage res: ${_res}")
-  message("${_output}")
-  message("${_err}")
-  execute_process(COMMAND ${CMAKE_COMMAND} --build .
-    WORKING_DIRECTORY ${_external_dir}/build
-	RESULT_VARIABLE _res
-	OUTPUT_VARIABLE _output
-	ERROR_VARIABLE _err
-    )
-  message("${name} build stage res: ${_res}")
-  message("${_output}")
-  message("${_err}")
-endmacro()
+# Build thirdparties
+file(MAKE_DIRECTORY ${THIRDPARTY_BUILD_DIR})
+message("Building thirdparties")
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR} ${THIRDPARTY_DIR}
+  -DTHIRDPARTY_INSTALL_DIR=${THIRDPARTY_INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+  WORKING_DIRECTORY ${THIRDPARTY_BUILD_DIR}
+  RESULT_VARIABLE _res
+  OUTPUT_VARIABLE _output
+  ERROR_VARIABLE _err
+  )
+message("${_output}")
+message("${_err}")
+if(NOT ${_res} EQUAL 0)
+  message(FATAL_ERROR "Thirdparty configure stage failed")
+endif()
 
-# Add here your external projects
-custom_external_project(glfw)
+execute_process(
+  COMMAND ${CMAKE_COMMAND} --build .
+  WORKING_DIRECTORY ${THIRDPARTY_BUILD_DIR}
+  RESULT_VARIABLE _res
+  OUTPUT_VARIABLE _output
+  ERROR_VARIABLE _err
+  )
+message("${_output}")
+message("${_err}")
+if(NOT ${_res} EQUAL 0)
+  message(FATAL_ERROR "Thirdparty build stage failed")
+endif()
 
-# Find required modules
-find_package(glfw REQUIRED)
+find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
-set(RESOURCES_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/res_path.h.in 
-  ${CMAKE_CURRENT_BINARY_DIR}/res_path.h)
-
-include_directories(
-  ${GLFW_INCLUDE_DIR} 
-  ${OPENGL_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_BINARY_DIR})
-
 set(SOURCES
-  api.cpp
-  gl_core_3_3.c
-  main.cpp
-  program.cpp
-)
-add_executable(OglPlayground ${SOURCES})
-target_link_libraries(OglPlayground ${OPENGL_LIBRARIES} ${GLFW_LIBRARY} Xxf86vm pthread X11 Xrandr Xi)
+  src/glad.c
+  src/main.cpp
+  src/program.cpp
+  )
+add_executable(oglplayground ${SOURCES})
+target_include_directories(oglplayground PUBLIC include)
+target_link_libraries(oglplayground PUBLIC glfw ${OPENGL_LIBRARIES})
