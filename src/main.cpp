@@ -1,9 +1,14 @@
 #include <cassert>
 #include <iostream>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+
 #include "program.h"
+#include "resources_path.h"
 
 namespace
 {
@@ -20,32 +25,32 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
   }
 }
 
-GLfloat vertices[] = {
-     0.5f,  0.5f, 0.0f,  // Top Right
-     0.5f, -0.5f, 0.0f,  // Bottom Right
-    -0.5f, -0.5f, 0.0f,  // Bottom Left
-    -0.5f,  0.5f, 0.0f   // Top Left 
-};
-GLuint indices[] = {  // Note that we start from 0!
-    0, 1, 3,   // First Triangle
-    1, 2, 3    // Second Triangle
-};
-
 const char* vertSrc = R"src(
 #version 330 core
 layout (location = 0) in vec3 position;
+layout (location = 1) in vec3 color;
+layout (location = 2) in vec2 texCoord;
+out vec3 vertexColor;
+out vec2 TexCoord;
 void main()
 {
-    gl_Position = vec4(position.x, position.y, position.z, 1.0);
+    gl_Position = vec4(position, 1.0);
+    vertexColor = color;
+    TexCoord = texCoord;
 }
 )src";
 
 const char* fragSrc = R"src(
 #version 330 core
+in vec3 vertexColor;
+in vec2 TexCoord;
 out vec4 color;
+
+uniform sampler2D ourTexture;
+
 void main()
 {
-    color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    color = texture(ourTexture, TexCoord);
 } 
 )src";
 
@@ -83,6 +88,19 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
 
+    GLfloat vertices[] = {
+    // Positions          // Colors           // Texture Coords
+     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // Top Right
+     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // Bottom Right
+    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // Bottom Left
+    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // Top Left 
+    };
+    
+    GLuint indices[] = {
+      0, 1, 2,
+      3, 0, 2
+    };
+
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
     GLuint VBO;
@@ -97,22 +115,38 @@ int main()
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); 
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    const GLsizei stride = 8 * sizeof(GLfloat);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(3* sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
     
     glBindVertexArray(0);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Load texture
+    int width, height, nbChannel;
+    stbi_set_flip_vertically_on_load(1);
+    stbi_uc* image = stbi_load(OglPlayground::resource_path("container.jpg"), &width, &height, &nbChannel, STBI_rgb);
+    assert(nbChannel == 3);
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    stbi_image_free(image);
 
-    OglPlayground::Program program(vertSrc, fragSrc, [](const char* msg) { std::cerr << msg << std::endl; });
-    assert(program.isValid());
-
-    // Game loop
-    while (!glfwWindowShouldClose(window))
     {
+      OglPlayground::Program program(vertSrc, fragSrc, [](const char* msg) { std::cerr << msg; });
+      assert(program.isValid());
+
+      // Game loop
+      while (!glfwWindowShouldClose(window))
+      {
         // Check if any events have been activated (key pressed, mouse moved etc.) and call corresponding response functions
-         glfwPollEvents();
+        glfwPollEvents();
 
         // Render
         // Clear the colorbuffer
@@ -120,12 +154,14 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         program.use();
+        glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         // Swap the screen buffers
         glfwSwapBuffers(window);
+      }
     }
 
     // Terminates GLFW, clearing any resources allocated by GLFW.

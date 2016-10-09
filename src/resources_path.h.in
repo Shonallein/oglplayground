@@ -1,0 +1,16 @@
+#pragma once
+
+#include <string>
+
+namespace OglPlayground
+{
+
+const char* resource_path(const char* resource)
+{
+  // Hack to return a temporary valid const char* for convenience.
+  static std::string path;
+  path = std::string("@RESOURCES_PATH@") + "/" + resource;
+  return path.c_str();
+}
+
+}

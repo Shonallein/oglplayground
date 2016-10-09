@@ -41,14 +41,20 @@ if(NOT ${_res} EQUAL 0)
   message(FATAL_ERROR "Thirdparty build stage failed")
 endif()
 
+# Find thirdparties
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
+
 
 set(SOURCES
   src/glad.c
   src/main.cpp
   src/program.cpp
   )
+
+set(RESOURCES_PATH ${PROJECT_SOURCE_DIR}/resources)
+configure_file(src/resources_path.h.in ${CMAKE_CURRENT_BINARY_DIR}/resources_path.h @ONLY)
+
 add_executable(oglplayground ${SOURCES})
-target_include_directories(oglplayground PUBLIC include)
+target_include_directories(oglplayground PUBLIC include ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(oglplayground PUBLIC glfw ${OPENGL_LIBRARIES})

@@ -9,3 +9,14 @@ ExternalProject_Add(
   PATCH_COMMAND ""
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${THIRDPARTY_INSTALL_DIR}
   )
+
+ExternalProject_Add(
+  stb
+  GIT_REPOSITORY https://github.com/nothings/stb.git
+  GIT_TAG dca0a37ff492200451b4a489276fcd9a065afc2d
+  UPDATE_COMMAND ""
+  PATCH_COMMAND ""
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND cd ../stb && cmake -E make_directory ${THIRDPARTY_INSTALL_DIR}/include/stb && cmake -E copy_if_different stb_image.h ${THIRDPARTY_INSTALL_DIR}/include/stb 
+  )
