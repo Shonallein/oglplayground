@@ -20,3 +20,12 @@ ExternalProject_Add(
   BUILD_COMMAND ""
   INSTALL_COMMAND cd ../stb && cmake -E make_directory ${THIRDPARTY_INSTALL_DIR}/include/stb && cmake -E copy_if_different stb_image.h ${THIRDPARTY_INSTALL_DIR}/include/stb 
   )
+
+ExternalProject_Add(
+  glm
+  GIT_REPOSITORY https://github.com/g-truc/glm.git
+  GIT_TAG 0.9.8.1
+  UPDATE_COMMAND ""
+  PATCH_COMMAND ""
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${THIRDPARTY_INSTALL_DIR}
+  )

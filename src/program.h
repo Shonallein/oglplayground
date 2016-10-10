@@ -11,8 +11,8 @@ namespace OglPlayground
 
 struct UniformDesc
 {
-  GLint type;
-  GLint location;
+  GLint type = 0;
+  GLint location = 0;
   std::string name;
 };
 
@@ -27,6 +27,8 @@ public:
   bool isValid() const;
   void use() const;
 
+  const UniformDesc* desc(const std::string& name) const;
+  
   // List returned in alphabetic order
   const std::vector<UniformDesc>& descs() const;
   

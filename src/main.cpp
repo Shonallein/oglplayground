@@ -7,6 +7,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "program.h"
 #include "resources_path.h"
 
@@ -28,21 +32,20 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 const char* vertSrc = R"src(
 #version 330 core
 layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 color;
-layout (location = 2) in vec2 texCoord;
-out vec3 vertexColor;
+layout (location = 1) in vec2 texCoord;
 out vec2 TexCoord;
+
+uniform mat4 transform;
+
 void main()
 {
-    gl_Position = vec4(position, 1.0);
-    vertexColor = color;
+    gl_Position = transform * vec4(position, 1.0);
     TexCoord = texCoord;
 }
 )src";
 
 const char* fragSrc = R"src(
 #version 330 core
-in vec3 vertexColor;
 in vec2 TexCoord;
 out vec4 color;
 
@@ -89,16 +92,68 @@ int main()
     glfwSetKeyCallback(window, key_callback);
 
     GLfloat vertices[] = {
-    // Positions          // Colors           // Texture Coords
-     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // Top Right
-     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // Bottom Right
-    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // Bottom Left
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // Top Left 
+      -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+      0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+      -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+      0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+      -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+      -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+      -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+      0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+      0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+      0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+      -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+      0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+      0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+      0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+      -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+      -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+      0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+      -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
     
     GLuint indices[] = {
-      0, 1, 2,
-      3, 0, 2
+        // front
+		0, 1, 2,
+		3, 4, 5,
+		// top
+		1, 5, 6,
+		6, 2, 1,
+		// back
+		7, 6, 5,
+		5, 4, 7,
+		// bottom
+		4, 0, 3,
+		3, 7, 4,
+		// left
+		4, 5, 1,
+		1, 0, 4,
+		// right
+		3, 2, 6,
+		6, 7, 3,
     };
 
     GLuint VAO;
@@ -113,15 +168,14 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW); 
-    const GLsizei stride = 8 * sizeof(GLfloat);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    
+    const GLsizei stride = 5 * sizeof(GLfloat);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*)0);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(3* sizeof(GLfloat)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(6 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(2);
     
     glBindVertexArray(0);
 
@@ -141,6 +195,10 @@ int main()
     {
       OglPlayground::Program program(vertSrc, fragSrc, [](const char* msg) { std::cerr << msg; });
       assert(program.isValid());
+      for(const auto& desc : program.descs())
+      {
+        std::cout << "Uniform " << desc.name << " located at " << desc.location << std::endl;
+      }
 
       // Game loop
       while (!glfwWindowShouldClose(window))
@@ -151,12 +209,44 @@ int main()
         // Render
         // Clear the colorbuffer
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);  
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         program.use();
+
+        glm::mat4 view;
+        // Note that we're translating the scene in the reverse direction of where we want to move
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        glm::mat4 projection;
+        int screenWidth, screenHeight;
+        glfwGetWindowSize(window, &screenWidth, &screenHeight);
+        projection = glm::perspective(45.0f, (float)screenWidth / (float)screenHeight, 0.1f, 100.0f);
+
+        std::vector<glm::vec3> cubePositions = {
+          glm::vec3( 0.0f,  0.0f,  0.0f), 
+          glm::vec3( 2.0f,  5.0f, -15.0f), 
+          glm::vec3(-1.5f, -2.2f, -2.5f),  
+          glm::vec3(-3.8f, -2.0f, -12.3f),  
+          glm::vec3( 2.4f, -0.4f, -3.5f),  
+          glm::vec3(-1.7f,  3.0f, -7.5f),  
+          glm::vec3( 1.3f, -2.0f, -2.5f),  
+          glm::vec3( 1.5f,  2.0f, -2.5f), 
+          glm::vec3( 1.5f,  0.2f, -1.5f), 
+          glm::vec3(-1.3f,  1.0f, -1.5f)  
+        };
+
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        for(int i = 0; i < cubePositions.size(); ++i)
+        {
+          glm::mat4 model;
+          model = glm::translate(model, cubePositions[i]);
+          model = glm::rotate(model, (GLfloat)glfwGetTime()*glm::radians(20.0f * (i+1)), glm::vec3(1.0f, 0.3f, 0.5f));
+          glm::mat4 mvp = projection*view*model;
+          glUniformMatrix4fv(program.desc("transform")->location, 1, GL_FALSE, glm::value_ptr(mvp));
+          glDrawArrays(GL_TRIANGLES, 0, 36);
+          //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        }
         glBindVertexArray(0);
 
         // Swap the screen buffers

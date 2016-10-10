@@ -123,7 +123,7 @@ Program::Program(
   std::sort(
       uniformsDesc_.begin(),
       uniformsDesc_.end(),
-      [](auto a, auto b) { return a.name < b.name; });
+      [](const auto& a, const auto& b) { return a.name < b.name; });
 }
 
 Program::~Program()
@@ -142,6 +142,17 @@ void Program::use() const
   glUseProgram(program_);
 }
 
+const UniformDesc* Program::desc(const std::string& name) const
+{
+  auto it = std::lower_bound(
+      uniformsDesc_.cbegin(),
+      uniformsDesc_.cend(),
+      name,
+      [](const auto& elem, const auto& value) { return elem.name < value; });
+  if(it != uniformsDesc_.end()) return &(*it);
+  return nullptr;
+}
+    
 const std::vector<UniformDesc>& Program::descs() const
 {
   return uniformsDesc_;

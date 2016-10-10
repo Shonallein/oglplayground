@@ -44,6 +44,7 @@ endif()
 # Find thirdparties
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(glm)
 
 
 set(SOURCES
@@ -57,4 +58,4 @@ configure_file(src/resources_path.h.in ${CMAKE_CURRENT_BINARY_DIR}/resources_pat
 
 add_executable(oglplayground ${SOURCES})
 target_include_directories(oglplayground PUBLIC include ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(oglplayground PUBLIC glfw ${OPENGL_LIBRARIES})
+target_link_libraries(oglplayground PUBLIC glfw ${OPENGL_LIBRARIES} glm)
