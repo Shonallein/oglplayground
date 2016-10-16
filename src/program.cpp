@@ -126,9 +126,26 @@ Program::Program(
       [](const auto& a, const auto& b) { return a.name < b.name; });
 }
 
+Program::Program(Program&& other)
+{
+  this->swap(other);
+}
+
 Program::~Program()
 {
   if(program_ != 0) glDeleteProgram(program_);
+}
+
+Program& Program::operator=(Program&& other)
+{
+  this->swap(other);
+  return *this;
+}
+
+void Program::swap(Program& other)
+{
+  std::swap(program_, other.program_);
+  std::swap(uniformsDesc_, other.uniformsDesc_);
 }
 
 bool Program::isValid() const

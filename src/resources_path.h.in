@@ -13,4 +13,9 @@ const char* resource_path(const char* resource)
   return path.c_str();
 }
 
+const char* resource_path(const std::string& resource)
+{
+  return resource_path(resource.c_str());
+}
+
 }

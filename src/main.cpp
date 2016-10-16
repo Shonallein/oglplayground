@@ -1,5 +1,7 @@
 #include <cassert>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -30,33 +32,26 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
   }
 }
 
-const char* vertSrc = R"src(
-#version 330 core
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec2 texCoord;
-out vec2 TexCoord;
-
-uniform mat4 transform;
-
-void main()
+OglPlayground::Program loadShader_(const std::string& filename)
 {
-    gl_Position = transform * vec4(position, 1.0);
-    TexCoord = texCoord;
+  std::string vertSrc;
+  {
+    std::ifstream t(OglPlayground::resource_path(filename+".vert.glsl"));
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    vertSrc = buffer.str();
+  }
+
+  std::string fragSrc;
+  {
+    std::ifstream t(OglPlayground::resource_path(filename+".frag.glsl"));
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    fragSrc = buffer.str();
+  }
+
+  return OglPlayground::Program(vertSrc.c_str(), fragSrc.c_str(), [](const char* msg) { std::cerr << msg; });
 }
-)src";
-
-const char* fragSrc = R"src(
-#version 330 core
-in vec2 TexCoord;
-out vec4 color;
-
-uniform sampler2D ourTexture;
-
-void main()
-{
-    color = texture(ourTexture, TexCoord);
-} 
-)src";
 
 }
 
@@ -173,7 +168,7 @@ int main()
       OglPlayground::GeometryBinder geomBinder(geom, attribDesc);
 
       // shader
-      OglPlayground::Program program(vertSrc, fragSrc, [](const char* msg) { std::cerr << msg; });
+      OglPlayground::Program program = loadShader_("simple");
       assert(program.isValid());
       for(const auto& desc : program.descs())
       {

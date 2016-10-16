@@ -24,7 +24,12 @@ class Program : public noncopyable
 public:
   typedef std::function<void (const char*)> LogFunction;
   Program(const char* vsSource, const char* psSource, const LogFunction& log = {});
+  Program(Program&& other);
   ~Program();
+
+  Program& operator=(Program&& other);
+
+  void swap(Program& other);
 
   bool isValid() const;
   void use() const;
