@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "geometry.h"
 #include "program.h"
 #include "resources_path.h"
 
@@ -135,49 +136,13 @@ int main()
       -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
     
-    GLuint indices[] = {
+    uint32_t indices[] = {
         // front
-		0, 1, 2,
-		3, 4, 5,
-		// top
-		1, 5, 6,
-		6, 2, 1,
-		// back
-		7, 6, 5,
-		5, 4, 7,
-		// bottom
-		4, 0, 3,
-		3, 7, 4,
-		// left
-		4, 5, 1,
-		1, 0, 4,
-		// right
-		3, 2, 6,
-		6, 7, 3,
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+      10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+      20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+      30, 31, 32, 33, 34, 35
     };
-
-    GLuint VAO;
-    glGenVertexArrays(1, &VAO);
-    GLuint VBO;
-    glGenBuffers(1, &VBO);
-    GLuint EBO;
-    glGenBuffers(1, &EBO);
-    
-    glBindVertexArray(VAO);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    
-    const GLsizei stride = 5 * sizeof(GLfloat);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-    
-    glBindVertexArray(0);
 
     // Load texture
     int width, height, nbChannel;
@@ -193,6 +158,21 @@ int main()
     stbi_image_free(image);
 
     {
+      // geomtery 
+      const OglPlayground::VertexDesc vertDesc = {
+        {OglPlayground::AttributeUsage::Position, 3},
+        {OglPlayground::AttributeUsage::UV0, 2}
+      };
+      const size_t stride = strideFromVertexDesc(vertDesc);
+      OglPlayground::Geometry geom(vertices, sizeof(vertices)/stride, indices, sizeof(indices)/sizeof(uint32_t), vertDesc);
+
+      const OglPlayground::AttributeBindDesc attribDesc = {
+        {OglPlayground::AttributeUsage::Position, 0},
+        {OglPlayground::AttributeUsage::UV0, 1}
+      };
+      OglPlayground::GeometryBinder geomBinder(geom, attribDesc);
+
+      // shader
       OglPlayground::Program program(vertSrc, fragSrc, [](const char* msg) { std::cerr << msg; });
       assert(program.isValid());
       for(const auto& desc : program.descs())
@@ -215,8 +195,10 @@ int main()
         program.use();
 
         glm::mat4 view;
-        // Note that we're translating the scene in the reverse direction of where we want to move
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        GLfloat radius = 10.0f;
+        GLfloat camX = (GLfloat)sin(glfwGetTime()) * radius;
+        GLfloat camZ = (GLfloat)cos(glfwGetTime()) * radius;
+        view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
         glm::mat4 projection;
         int screenWidth, screenHeight;
         glfwGetWindowSize(window, &screenWidth, &screenHeight);
@@ -236,7 +218,7 @@ int main()
         };
 
         glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(VAO);
+        geomBinder.bind();
         for(int i = 0; i < cubePositions.size(); ++i)
         {
           glm::mat4 model;
@@ -244,10 +226,9 @@ int main()
           model = glm::rotate(model, (GLfloat)glfwGetTime()*glm::radians(20.0f * (i+1)), glm::vec3(1.0f, 0.3f, 0.5f));
           glm::mat4 mvp = projection*view*model;
           glUniformMatrix4fv(program.desc("transform")->location, 1, GL_FALSE, glm::value_ptr(mvp));
-          glDrawArrays(GL_TRIANGLES, 0, 36);
-          //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+          glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
-        glBindVertexArray(0);
+        geomBinder.unbind();
 
         // Swap the screen buffers
         glfwSwapBuffers(window);

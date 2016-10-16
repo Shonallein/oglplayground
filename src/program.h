@@ -6,6 +6,8 @@
 
 #include <glad/glad.h>
 
+#include "noncopyable.h"
+
 namespace OglPlayground
 {
 
@@ -17,7 +19,7 @@ struct UniformDesc
 };
 
 //! Encapsulate an opengl program
-class Program
+class Program : public noncopyable
 {
 public:
   typedef std::function<void (const char*)> LogFunction;

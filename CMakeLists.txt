@@ -48,6 +48,8 @@ find_package(glm)
 
 
 set(SOURCES
+  src/bufferobject.cpp
+  src/geometry.cpp
   src/glad.c
   src/main.cpp
   src/program.cpp
