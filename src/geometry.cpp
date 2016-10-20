@@ -32,25 +32,29 @@ Geometry::Geometry(
         indicesCount*sizeof(uint32_t),
         indices,
         GL_STATIC_DRAW)
+    , verticesCount_(verticesCount)
+    , indicesCount_(indicesCount)
     , desc_(desc)
 {
 }
 
-GeometryBinder::GeometryBinder(const Geometry& geometry, AttributeBindDesc desc)
+GeometryBinder::GeometryBinder(const Geometry* geometry, AttributeBindDesc desc) : geometry_(geometry)
 {
+  assert(geometry_ != nullptr);
+      
   glGenVertexArrays(1, &vao_);
   bind();
-  geometry.vertices_.bind();
-  geometry.indices_.bind();
+  geometry_->vertices_.bind();
+  geometry_->indices_.bind();
 
   std::sort(
       desc.begin(),
       desc.end(),
       [](const auto& a, const auto& b) { return a.usage < b.usage;});
 
-  const size_t stride = strideFromVertexDesc(geometry.desc_);
+  const size_t stride = strideFromVertexDesc(geometry->desc_);
   size_t offset = 0;
-  for(const auto& attribDesc : geometry.desc_) {
+  for(const auto& attribDesc : geometry->desc_) {
     auto it = std::lower_bound(
         desc.begin(),
         desc.end(),
@@ -65,13 +69,18 @@ GeometryBinder::GeometryBinder(const Geometry& geometry, AttributeBindDesc desc)
   }
   
   unbind();
-  geometry.vertices_.unbind();
-  geometry.indices_.unbind();
+  geometry->vertices_.unbind();
+  geometry->indices_.unbind();
 }
 
 void GeometryBinder::bind() const
 {
   glBindVertexArray(vao_);
+}
+
+void GeometryBinder::draw() const
+{
+  glDrawElements(GL_TRIANGLES, (GLsizei)geometry_->indicesCount_, GL_UNSIGNED_INT, 0);
 }
 
 void GeometryBinder::unbind() const

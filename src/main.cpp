@@ -12,12 +12,15 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "application.h"
+#include "camera.h"
 #include "geometry.h"
 #include "program.h"
 #include "resources_path.h"
+#include "transform.h"
 
 namespace
 {
@@ -44,26 +47,52 @@ std::unique_ptr<OglPlayground::Program> loadShader_(const std::string& filename)
       new OglPlayground::Program(vertSrc.c_str(), fragSrc.c_str(), [](const char* msg) { std::cerr << msg; }));
 }
 
+
+class SphericalCameraController : public OglPlayground::InputListener, public OglPlayground::noncopyable
+{
+public:
+  SphericalCameraController(OglPlayground::Transform* transform) : transform_(transform) {
+    assert(transform_);
+    transform_->position = glm::vec3(0.f, 0.f, 10.f);
+  }
+
+  //void keyEvent(int modifiers, int key, int action) override {}
+  //void mouseMoveEvent(double x, double y) override {}
+  void scrollEvent(double x, double y) override {
+    transform_->position += glm::vec3(0.f, 0.f, y);
+  }
+
+private:
+  OglPlayground::Transform* transform_;
+};
+
 class TestBehavior : public OglPlayground::Behavior, public OglPlayground::noncopyable
 {
 public:
-  TestBehavior() = default;
+  TestBehavior();
   ~TestBehavior() = default;
 
-  void setup() override;
+  void setup(OglPlayground::Application* app) override;
   void update(int width, int height) override;
-  void teardown() override;
+  void teardown(OglPlayground::Application* app) override;
 
 private:
   std::unique_ptr<OglPlayground::Geometry> geom_;
   std::unique_ptr<OglPlayground::GeometryBinder> geomBinder_;
   std::unique_ptr<OglPlayground::Program> program_;
+  OglPlayground::Camera camera_;
+  SphericalCameraController sphericalController_;
   GLuint texture_ = 0;
 };
 
-void TestBehavior::setup()
+TestBehavior::TestBehavior() : sphericalController_(&camera_.transform()) {}
+
+void TestBehavior::setup(OglPlayground::Application* app)
 {
   std::cout << "SETUP" << std::endl;
+
+  app->registerListener(&sphericalController_);
+  
   // geomtery 
   const GLfloat vertices[] = {
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -133,7 +162,7 @@ void TestBehavior::setup()
     {OglPlayground::AttributeUsage::Position, 0},
     {OglPlayground::AttributeUsage::UV0, 1}
   };
-  geomBinder_.reset(new OglPlayground::GeometryBinder(*geom_, attribDesc));
+  geomBinder_.reset(new OglPlayground::GeometryBinder(geom_.get(), attribDesc));
 
   // Shader
   program_ = loadShader_("simple");
@@ -155,56 +184,44 @@ void TestBehavior::setup()
   glGenerateMipmap(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, 0);
   stbi_image_free(image);
+
+  // Camera setup
+  camera_.setFov(45.f);
+  camera_.setClippingPlanes(0.1f, 100.f);
 }
 
 void TestBehavior::update(int width, int height)
 {
   // Render
   // Clear the colorbuffer
+  camera_.setAspect((float)width / (float)height);
+  glViewport(0, 0, width, height);
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glEnable(GL_DEPTH_TEST);  
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   program_->use();
-
-  glm::mat4 view;
-  GLfloat radius = 10.0f;
-  GLfloat camX = (GLfloat)sin(glfwGetTime()) * radius;
-  GLfloat camZ = (GLfloat)cos(glfwGetTime()) * radius;
-  view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-  glm::mat4 projection;
-  projection = glm::perspective(45.0f, (float)width / (float)height, 0.1f, 100.0f);
-
-  std::vector<glm::vec3> cubePositions = {
-    glm::vec3( 0.0f,  0.0f,  0.0f), 
-    glm::vec3( 2.0f,  5.0f, -15.0f), 
-    glm::vec3(-1.5f, -2.2f, -2.5f),  
-    glm::vec3(-3.8f, -2.0f, -12.3f),  
-    glm::vec3( 2.4f, -0.4f, -3.5f),  
-    glm::vec3(-1.7f,  3.0f, -7.5f),  
-    glm::vec3( 1.3f, -2.0f, -2.5f),  
-    glm::vec3( 1.5f,  2.0f, -2.5f), 
-    glm::vec3( 1.5f,  0.2f, -1.5f), 
-    glm::vec3(-1.3f,  1.0f, -1.5f)  
-  };
-
   glBindTexture(GL_TEXTURE_2D, texture_);
   geomBinder_->bind();
-  for(int i = 0; i < cubePositions.size(); ++i)
-  {
-    glm::mat4 model;
-    model = glm::translate(model, cubePositions[i]);
-    model = glm::rotate(model, (GLfloat)glfwGetTime()*glm::radians(20.0f * (i+1)), glm::vec3(1.0f, 0.3f, 0.5f));
-    glm::mat4 mvp = projection*view*model;
-    glUniformMatrix4fv(program_->desc("transform")->location, 1, GL_FALSE, glm::value_ptr(mvp));
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-  }
+
+  glm::mat4 view(1.f);
+  GLfloat radius = 5.0f;
+  GLfloat camX = (GLfloat)sin(glfwGetTime()) * radius;
+  GLfloat camZ = (GLfloat)cos(glfwGetTime()) * radius;
+  //view = glm::lookAt(glm::vec3(radius, radius, radius), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+  view = camera_.transform().matrix();
+  
+  glm::mat4 model(1.f);
+  glm::mat4 mvp = camera_.projection()*view*model;
+  glUniformMatrix4fv(program_->desc("transform")->location, 1, GL_FALSE, glm::value_ptr(mvp));
+  geomBinder_->draw();
   geomBinder_->unbind();
 }
 
-void TestBehavior::teardown()
+void TestBehavior::teardown(OglPlayground::Application* app)
 {
   std::cout << "TEARDOWN" << std::endl;
+  app->unregisterListener(&sphericalController_);
   geomBinder_.reset(nullptr);
   geom_.reset(nullptr);
   program_.reset(nullptr);
@@ -233,8 +250,8 @@ int main()
 {
   OglPlayground::Application application;
   InputLogger inputLogger;
-  application.registerListener(&inputLogger);
+  //application.registerListener(&inputLogger);
   TestBehavior behavior;
   application.run(&behavior);
-  application.unregisterListener(&inputLogger);
+  //application.unregisterListener(&inputLogger);
 }

@@ -16,15 +16,17 @@ public:
   virtual void scrollEvent(double x, double y) {}
 };
 
+class Application;
+
 class Behavior
 {
 public:
   Behavior() = default;
   ~Behavior() = default;
   
-  virtual void setup() = 0;
+  virtual void setup(Application* app) = 0;
   virtual void update(int width, int height) = 0;
-  virtual void teardown() = 0;
+  virtual void teardown(Application* app) = 0;
 };
   
 class Application

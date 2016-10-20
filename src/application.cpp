@@ -96,7 +96,7 @@ Application::~Application()
 void Application::run(Behavior* behavior)
 {
   assert(behavior);
-  behavior->setup();
+  behavior->setup(this);
   while (!glfwWindowShouldClose(impl_->window_))
   {
     // Check if any events have been activated (key pressed, mouse moved etc.) and call corresponding response functions
@@ -106,7 +106,7 @@ void Application::run(Behavior* behavior)
     behavior->update(width, height);
     glfwSwapBuffers(impl_->window_);
   }
-  behavior->teardown();
+  behavior->teardown(this);
 }
 
 void Application::registerListener(InputListener* listener)

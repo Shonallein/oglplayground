@@ -50,10 +50,12 @@ find_package(glm)
 set(SOURCES
   src/application.cpp
   src/bufferobject.cpp
+  src/camera.cpp
   src/geometry.cpp
   src/glad.c
   src/main.cpp
   src/program.cpp
+  src/transform.cpp
   )
 
 set(RESOURCES_PATH ${PROJECT_SOURCE_DIR}/resources)

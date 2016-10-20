@@ -40,6 +40,8 @@ public:
 private:
   BufferObject vertices_; 
   BufferObject indices_;
+  size_t verticesCount_;
+  size_t indicesCount_;
   VertexDesc desc_;
 };
 
@@ -53,12 +55,14 @@ typedef std::vector<AttributeBind> AttributeBindDesc;
 class GeometryBinder : public noncopyable
 {
 public:
-  GeometryBinder(const Geometry& geometry, AttributeBindDesc desc);
+  GeometryBinder(const Geometry* geometry, AttributeBindDesc desc);
   void bind() const;
+  void draw() const;
   void unbind() const;
 
 private:
   GLuint vao_ = 0;
+  const Geometry* geometry_ = nullptr;
 };
 
 } // namespace OglPlayground
