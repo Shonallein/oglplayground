@@ -15,12 +15,13 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <oglplayground/camera.h>
+#include <oglplayground/geometry.h>
+#include <oglplayground/program.h>
+#include <oglplayground/transform.h>
+
 #include "application.h"
-#include "camera.h"
-#include "geometry.h"
-#include "program.h"
 #include "resources_path.h"
-#include "transform.h"
 
 namespace
 {

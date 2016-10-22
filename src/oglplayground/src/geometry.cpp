@@ -1,4 +1,4 @@
-#include "geometry.h"
+#include <oglplayground/geometry.h>
 
 #include <algorithm>
 #include <cassert>

@@ -1,4 +1,4 @@
-#include "bufferobject.h"
+#include <oglplayground/bufferobject.h>
 
 namespace OglPlayground
 {

@@ -1,0 +1,17 @@
+# First small lib for glad
+add_library(glad STATIC src/glad.c)
+target_include_directories(glad PUBLIC include)
+target_link_libraries(glad PUBLIC ${OPENGL_LIBRARIES})
+
+# List oglplayground sources here
+set(SOURCES
+  src/bufferobject.cpp
+  src/camera.cpp
+  src/geometry.cpp
+  src/program.cpp
+  src/transform.cpp)
+
+add_library(oglplayground STATIC ${SOURCES})
+target_include_directories(oglplayground PUBLIC include)
+target_link_libraries(oglplayground PUBLIC ${OPENGL_LIBRARIES} glm glad)
+

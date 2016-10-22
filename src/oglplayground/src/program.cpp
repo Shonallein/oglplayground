@@ -1,4 +1,4 @@
-#include "program.h"
+#include <oglplayground/program.h>
 
 #include <algorithm>
 #include <cassert>

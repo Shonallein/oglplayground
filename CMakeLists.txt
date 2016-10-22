@@ -46,21 +46,5 @@ find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(glm)
 
-
-set(SOURCES
-  src/application.cpp
-  src/bufferobject.cpp
-  src/camera.cpp
-  src/geometry.cpp
-  src/glad.c
-  src/main.cpp
-  src/program.cpp
-  src/transform.cpp
-  )
-
-set(RESOURCES_PATH ${PROJECT_SOURCE_DIR}/resources)
-configure_file(src/resources_path.h.in ${CMAKE_CURRENT_BINARY_DIR}/resources_path.h @ONLY)
-
-add_executable(oglplayground ${SOURCES})
-target_include_directories(oglplayground PUBLIC include ${CMAKE_CURRENT_BINARY_DIR})
-target_link_libraries(oglplayground PUBLIC glfw ${OPENGL_LIBRARIES} glm)
+add_subdirectory(src/oglplayground)
+add_subdirectory(src/testapp)
