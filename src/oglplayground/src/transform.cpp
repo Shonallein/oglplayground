@@ -2,6 +2,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace OglPlayground
 {
@@ -18,7 +19,7 @@ void Transform::translate(const glm::vec3& translation, Space space)
 glm::mat4 Transform::matrix() const
 {
   glm::mat4 trs = glm::scale(glm::mat4(1.0f), scale);
-  trs *= glm::mat4_cast(rotation);
+  // trs *= 
   trs *= glm::translate(glm::mat4(1.0f), position);
   return trs;
 }

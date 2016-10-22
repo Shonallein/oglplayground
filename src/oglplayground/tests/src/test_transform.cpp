@@ -1,31 +1,41 @@
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/string_cast.hpp>
 #include <gtest/gtest.h>
 #include <oglplayground/transform.h>
 
 using OglPlayground::Transform;
 
-namespace glm
-{
+#define GLM_TYPE_STREAM_OP(type) \
+  namespace glm \
+  { \
+    ::std::ostream& operator<<(::std::ostream& os, const glm::##type& val) {    \
+    return os << glm::to_string(val); \
+    } \
+  } // namespace glm
 
-::std::ostream& operator<<(::std::ostream& os, const vec3& vec) {
-  return os
-      << "(x:" << vec.x << ", " 
-      << "y:" << vec.y << ", " 
-      << "z:" << vec.z << ")"; 
+GLM_TYPE_STREAM_OP(vec3)
+GLM_TYPE_STREAM_OP(quat)
+GLM_TYPE_STREAM_OP(mat3)
+GLM_TYPE_STREAM_OP(mat4)
+
+TEST(TransformTest, RightHanded) {
+  EXPECT_EQ(glm::vec3(1.f, 0.f, 0.f), Transform::right);
+  EXPECT_EQ(glm::vec3(0.f, 1.f, 0.f), Transform::up);
+  EXPECT_EQ(glm::vec3(0.f, 0.f, -1.f), Transform::forward);
 }
 
-::std::ostream& operator<<(::std::ostream& os, const quat& rot) {
-  return os
-      << "(x:" << rot.x << ", " 
-      << "y:" << rot.y << ", " 
-      << "z:" << rot.z << ", " 
-      << "w:" << rot.w << ")"; 
+TEST(TransformTest, GlmConversions) {
+  glm::mat3 defaultRot(Transform::right, Transform::up, Transform::forward);
+  std::cout << defaultRot << std::endl;
+  glm::quat quat = glm::normalize(glm::toQuat(defaultRot));
+  std::cout << quat << std::endl; 
+  std::cout << glm::mat4_cast(quat) << std::endl; 
 }
-
-} // namespace glm
 
 TEST(TransformTest, Default) {
   Transform tf;
   EXPECT_EQ(glm::vec3(0.f), tf.position);
-  EXPECT_EQ(glm::quat(1.f, 0.f, 0.f, 0.f), tf.rotation);
+  glm::mat3 defaultRot(Transform::right, Transform::up, Transform::forward);
+  EXPECT_EQ(glm::toQuat(defaultRot), tf.rotation);
   EXPECT_EQ(glm::vec3(1.f), tf.scale);
 }

@@ -14,6 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <oglplayground/camera.h>
 #include <oglplayground/geometry.h>
@@ -211,6 +212,7 @@ void TestBehavior::update(int width, int height)
   GLfloat camZ = (GLfloat)cos(glfwGetTime()) * radius;
   //view = glm::lookAt(glm::vec3(radius, radius, radius), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
   view = camera_.transform().matrix();
+  std::cout << glm::to_string(view) << std::endl;
   
   glm::mat4 model(1.f);
   glm::mat4 mvp = camera_.projection()*view*model;
