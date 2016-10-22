@@ -44,7 +44,10 @@ endif()
 # Find thirdparties
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(glm)
+find_package(glm REQUIRED)
+find_package(gtest REQUIRED)
+
+enable_testing()
 
 add_subdirectory(src/oglplayground)
 add_subdirectory(src/testapp)
