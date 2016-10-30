@@ -55,13 +55,13 @@ class SphericalCameraController : public OglPlayground::InputListener, public Og
 public:
   SphericalCameraController(OglPlayground::Transform* transform) : transform_(transform) {
     assert(transform_);
-    transform_->position = glm::vec3(0.f, 0.f, 10.f);
+    transform_->setLocalPosition(glm::vec3(0.f, 0.f, 10.f));
   }
 
   //void keyEvent(int modifiers, int key, int action) override {}
   //void mouseMoveEvent(double x, double y) override {}
   void scrollEvent(double x, double y) override {
-    transform_->position += glm::vec3(0.f, 0.f, y);
+    transform_->setLocalPosition(transform_->localPosition() + glm::vec3(0.f, 0.f, y));
   }
 
 private:
@@ -211,8 +211,7 @@ void TestBehavior::update(int width, int height)
   GLfloat camX = (GLfloat)sin(glfwGetTime()) * radius;
   GLfloat camZ = (GLfloat)cos(glfwGetTime()) * radius;
   //view = glm::lookAt(glm::vec3(radius, radius, radius), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-  view = camera_.transform().matrix();
-  std::cout << glm::to_string(view) << std::endl;
+  view = camera_.transform().localToWorldMatrix();
   
   glm::mat4 model(1.f);
   glm::mat4 mvp = camera_.projection()*view*model;
