@@ -49,5 +49,7 @@ find_package(gtest REQUIRED)
 
 enable_testing()
 
+add_definitions(-DGLM_FORCE_LEFT_HANDED)
+
 add_subdirectory(src/oglplayground)
 add_subdirectory(src/testapp)

@@ -41,6 +41,7 @@ public:
 
   void translate(const glm::vec3& translation, Space space);
   void rotate(const glm::vec3& eulerAngles, Space space);
+  void lookAt(const glm::vec3& target, glm::vec3 up);
   void scale(const glm::vec3& scale);
   
 private:

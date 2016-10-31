@@ -1,23 +1,10 @@
 #include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/string_cast.hpp>
 #include <gtest/gtest.h>
 #include <oglplayground/transform.h>
+#include <oglplayground/debug.h>
 
 using OglPlayground::Transform;
 using OglPlayground::Space;
-
-#define GLM_TYPE_STREAM_OP(type) \
-  namespace glm \
-  { \
-    ::std::ostream& operator<<(::std::ostream& os, const glm::##type& val) {    \
-    return os << glm::to_string(val); \
-    } \
-  } // namespace glm
-
-GLM_TYPE_STREAM_OP(vec3)
-GLM_TYPE_STREAM_OP(quat)
-GLM_TYPE_STREAM_OP(mat3)
-GLM_TYPE_STREAM_OP(mat4)
 
 TEST(TransformTest, LeftHanded) {
   EXPECT_EQ(glm::vec3(1.f, 0.f, 0.f), Transform::worldRight);
@@ -313,6 +300,36 @@ TEST(TransformTest, RLocalTWorld) {
         glm::vec4(0.000f, 1.000f, 0.000f , 0.000f), // 1
         glm::vec4(-0.707f, 0.000f, 0.707f , 0.000f), // 2
         glm::vec4(-2.828f, -3.000f, -4.243f , 1.000f) // 3
+               )
+  };
+  
+  check(tf, expected);
+}
+
+TEST(TransformTest, LookAt) {
+  Transform tf;
+  tf.translate(glm::vec3(5.f, 3.f, 1.f), Space::World);
+  tf.rotate(glm::vec3(0.f, 45.f, 0.f), Space::Local);
+  tf.lookAt(glm::vec3(10.f, 0.f, 0.f), Transform::worldUp);
+  
+  const ExpectedValues expected = {
+    glm::vec3(5.000f, 3.000f, 1.000f), // position
+    glm::quat(0.612f, 0.167f, 0.746f, -0.203f), // rotation
+    glm::vec3(1.000f, 1.000f, 1.000f), // scale
+    glm::vec3(-0.196f, 0.000f, -0.981f), // ritgh
+    glm::vec3(0.497f, 0.862f, -0.099f), // up
+    glm::vec3(0.845f, -0.507f, -0.169f), // forward
+    glm::mat4( // local to world
+        glm::vec4(-0.196f, 0.000f, -0.981f , 0.000f), // 0
+        glm::vec4(0.497f, 0.862f, -0.099f , 0.000f), // 1
+        glm::vec4(0.845f, -0.507f, -0.169f , 0.000f), // 2
+        glm::vec4(5.000f, 3.000f, 1.000f , 1.000f) // 3
+               ),
+    glm::mat4( // world to local
+        glm::vec4(-0.196f, 0.497f, 0.845f , 0.000f), // 0
+        glm::vec4(0.000f, 0.862f, -0.507f , 0.000f), // 1
+        glm::vec4(-0.981f, -0.099f, -0.169f , 0.000f), // 2
+        glm::vec4(1.961f, -4.972f, -2.535f , 1.000f) // 3
                )
   };
   

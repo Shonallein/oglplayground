@@ -7,6 +7,7 @@ target_link_libraries(glad PUBLIC ${OPENGL_LIBRARIES})
 set(SOURCES
   src/bufferobject.cpp
   src/camera.cpp
+  src/debug.cpp
   src/geometry.cpp
   src/program.cpp
   src/transform.cpp)

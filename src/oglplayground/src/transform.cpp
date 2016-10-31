@@ -4,6 +4,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include <oglplayground/debug.h>
+
 namespace OglPlayground
 {
 
@@ -88,6 +90,16 @@ void Transform::rotate(const glm::vec3& eulerAngles, Space space) {
   } else {
     assert(false && "Unsupported space");
   }
+}
+
+void Transform::lookAt(const glm::vec3& target, glm::vec3 up) {
+  const auto direction = glm::normalize(target-position());
+  auto r1 = glm::rotation(worldForward, direction);
+  const auto right = glm::cross(direction, up);
+  up = glm::normalize(glm::cross(right, direction));
+  auto newUp = r1 * worldUp;
+  auto r2 = glm::rotation(newUp, up);
+  setLocalRotation(r2*r1);
 }
 
 void Transform::scale(const glm::vec3& scale) {

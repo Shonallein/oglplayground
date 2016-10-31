@@ -14,9 +14,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 #include <oglplayground/camera.h>
+#include <oglplayground/debug.h>
 #include <oglplayground/geometry.h>
 #include <oglplayground/program.h>
 #include <oglplayground/transform.h>
@@ -50,22 +50,50 @@ std::unique_ptr<OglPlayground::Program> loadShader_(const std::string& filename)
 }
 
 
-class SphericalCameraController : public OglPlayground::InputListener, public OglPlayground::noncopyable
+class SphericalTransformController : public OglPlayground::InputListener, public OglPlayground::noncopyable
 {
 public:
-  SphericalCameraController(OglPlayground::Transform* transform) : transform_(transform) {
+  SphericalTransformController(OglPlayground::Transform* transform, const glm::vec3& center)
+      : transform_(transform)
+  {
     assert(transform_);
-    transform_->setLocalPosition(glm::vec3(0.f, 0.f, 10.f));
+    transform_->translate(glm::vec3(0.f, 0.f, -5.f), OglPlayground::Space::Local);
+    transform_->lookAt(center, OglPlayground::Transform::worldUp);
+    distance_ = glm::length(center-transform_->position());
   }
 
   //void keyEvent(int modifiers, int key, int action) override {}
-  //void mouseMoveEvent(double x, double y) override {}
+  void mouseMoveEvent(double x, double y) override {
+    if(init_) {      
+      const glm::vec3 translation(0.f, 0.f, distance_);
+      transform_->translate(translation, OglPlayground::Space::Local);
+      transform_->rotate(glm::vec3((y-lastMouseY_)*speed_, (x-lastMouseX_)*speed_, 0.f), OglPlayground::Space::Local);
+      transform_->translate(-translation, OglPlayground::Space::Local);
+      
+      transform_->lookAt(sphericalTransform_.position(), OglPlayground::Transform::worldUp);
+    }
+    lastMouseX_ = x;
+    lastMouseY_ = y;
+    init_ = true;
+  }
+  
   void scrollEvent(double x, double y) override {
-    transform_->setLocalPosition(transform_->localPosition() + glm::vec3(0.f, 0.f, y));
+    transform_->translate(glm::vec3(0.f, 0.f, y), OglPlayground::Space::Local);
+    std::cout << transform_->localPosition() << std::endl;
   }
 
 private:
   OglPlayground::Transform* transform_;
+  OglPlayground::Transform sphericalTransform_;
+
+  float distance_;
+  glm::vec3 center_;
+  float speed_ = 1.f;
+
+  
+  float lastMouseX_ = 0.f;
+  float lastMouseY_ = 0.f;
+  bool init_ = false;
 };
 
 class TestBehavior : public OglPlayground::Behavior, public OglPlayground::noncopyable
@@ -83,11 +111,11 @@ private:
   std::unique_ptr<OglPlayground::GeometryBinder> geomBinder_;
   std::unique_ptr<OglPlayground::Program> program_;
   OglPlayground::Camera camera_;
-  SphericalCameraController sphericalController_;
+  SphericalTransformController sphericalController_;
   GLuint texture_ = 0;
 };
 
-TestBehavior::TestBehavior() : sphericalController_(&camera_.transform()) {}
+TestBehavior::TestBehavior() : sphericalController_(&camera_.transform(), glm::vec3(0.f)) {}
 
 void TestBehavior::setup(OglPlayground::Application* app)
 {
@@ -211,7 +239,7 @@ void TestBehavior::update(int width, int height)
   GLfloat camX = (GLfloat)sin(glfwGetTime()) * radius;
   GLfloat camZ = (GLfloat)cos(glfwGetTime()) * radius;
   //view = glm::lookAt(glm::vec3(radius, radius, radius), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-  view = camera_.transform().localToWorldMatrix();
+  view = camera_.transform().worldToLocalMatrix();
   
   glm::mat4 model(1.f);
   glm::mat4 mvp = camera_.projection()*view*model;
@@ -229,31 +257,11 @@ void TestBehavior::teardown(OglPlayground::Application* app)
   program_.reset(nullptr);
 }
 
-class InputLogger : public OglPlayground::InputListener, public OglPlayground::noncopyable
-{
-public:
-  InputLogger() = default;
-  ~InputLogger() = default;
-
-  void keyEvent(int modifiers, int key, int action) override {
-    std::cout << "KEY EVENT (modifiers:" << modifiers << ", key:" << key << ", action:" << action << ")" << std::endl;
-  }
-  void mouseMoveEvent(double x, double y) override {
-    std::cout << "MOUSE MOVE EVENT (x:" << x << ", y:" << y << ")" << std::endl;
-  }
-  void scrollEvent(double x, double y) override {
-    std::cout << "SCROLL EVENT (x:" << x << ", y:" << y << ")" << std::endl;
-  }
-};
-
 }
 
 int main()
 {
   OglPlayground::Application application;
-  InputLogger inputLogger;
-  //application.registerListener(&inputLogger);
   TestBehavior behavior;
   application.run(&behavior);
-  //application.unregisterListener(&inputLogger);
 }
