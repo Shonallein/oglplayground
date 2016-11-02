@@ -2,6 +2,8 @@
 
 #include <memory>
 
+struct GLFWwindow;
+
 namespace OglPlayground
 {
 
@@ -11,9 +13,10 @@ public:
   InputListener() = default;
   ~InputListener() = default;
 
-  virtual void keyEvent(int modifiers, int key, int action) {}
-  virtual void mouseMoveEvent(double x, double y) {}
-  virtual void scrollEvent(double x, double y) {}
+  virtual void keyEvent(GLFWwindow* window, int modifiers, int key, int action) {}
+  virtual void mouseButtonEvent(GLFWwindow* window, int modifiers, int button, int action) {}
+  virtual void mouseMoveEvent(GLFWwindow* window, double x, double y) {}
+  virtual void scrollEvent(GLFWwindow* window, double x, double y) {}
 };
 
 class Application;

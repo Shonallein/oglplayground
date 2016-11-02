@@ -25,10 +25,18 @@ public:
     assert(currentInst_ != nullptr);
     if(currentInst_ == nullptr) return;
     
-    (void)window;
     (void)scancode;
     for(auto listener : currentInst_->listeners_) {
-      listener->keyEvent(modifiers, key, action);
+      listener->keyEvent(window, modifiers, key, action);
+    }
+  }
+
+  static void mouse_button_callback(GLFWwindow* window, int button, int action, int modifiers) {
+    assert(currentInst_ != nullptr);
+    if(currentInst_ == nullptr) return;
+
+    for(auto listener : currentInst_->listeners_) {
+      listener->mouseButtonEvent(window, modifiers, button, action);
     }
   }
   
@@ -36,9 +44,8 @@ public:
     assert(currentInst_ != nullptr);
     if(currentInst_ == nullptr) return;
 
-    (void)window;
     for(auto listener : currentInst_->listeners_) {
-      listener->mouseMoveEvent(x, y);
+      listener->mouseMoveEvent(window, x, y);
     }
   }
   
@@ -46,9 +53,8 @@ public:
     assert(currentInst_ != nullptr);
     if(currentInst_ == nullptr) return;
 
-    (void)window;
     for(auto listener : currentInst_->listeners_) {
-      listener->scrollEvent(xoffset, yoffset);
+      listener->scrollEvent(window, xoffset, yoffset);
     }
   }
 };
@@ -84,6 +90,7 @@ Application::Application() : impl_(new Impl_)
 
   // Input callbacks setup
   glfwSetKeyCallback(impl_->window_, &Impl_::key_callback);
+  glfwSetMouseButtonCallback(impl_->window_, &Impl_::mouse_button_callback);
   glfwSetCursorPosCallback(impl_->window_, &Impl_::cursor_pos_callback);
   glfwSetScrollCallback(impl_->window_, &Impl_::scroll_callback);
 }
