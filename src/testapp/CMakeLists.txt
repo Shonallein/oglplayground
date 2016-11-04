@@ -1,6 +1,7 @@
 set(SOURCES
   src/application.cpp
   src/main.cpp
+  src/sphericalcontroller.cpp
   )
 
 set(RESOURCES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/resources)

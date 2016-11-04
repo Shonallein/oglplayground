@@ -25,6 +25,7 @@
 
 #include "application.h"
 #include "resources_path.h"
+#include "sphericalcontroller.h"
 
 namespace
 {
@@ -51,88 +52,29 @@ std::unique_ptr<OglPlayground::Program> loadShader_(const std::string& filename)
       new OglPlayground::Program(vertSrc.c_str(), fragSrc.c_str(), [](const char* msg) { std::cerr << msg; }));
 }
 
-
-class SphericalTransformController : public OglPlayground::InputListener, public OglPlayground::noncopyable
-{
-public:
-  SphericalTransformController(OglPlayground::Transform* transform, const glm::vec3& center)
-      : transform_(transform)
-      , center_(center)
-  {
-    assert(transform_);
-    transform_->lookAt(center, OglPlayground::Transform::worldUp);
-    distance_ = glm::length(center-transform_->position());
-    angles_ = glm::eulerAngles(transform_->rotation());
-  }
-
-  void mouseButtonEvent(GLFWwindow* window, int modifiers, int button, int action) override {
-    if(button != GLFW_MOUSE_BUTTON_LEFT) return;
-    pressed_ = (action == GLFW_PRESS);
-    glfwGetCursorPos(window, &lastMouseX_, &lastMouseY_);
-  }
-  
-  void mouseMoveEvent(GLFWwindow*, double x, double y) override {
-    if(!pressed_) return;
-    
-    const glm::vec3 translation(0.f, 0.f, distance_);
-    transform_->translate(translation, OglPlayground::Space::Local);
-    angles_ +=
-        glm::vec3(
-            float(y-lastMouseY_) * speed_ * distance_,
-            float(x-lastMouseX_) * speed_ * distance_,
-            0.f);
-    angles_.x = std::max(std::min(angles_.x, 89.f), -89.f);
-    transform_->setLocalRotation(glm::quat(glm::radians(angles_)));
-    transform_->translate(-translation, OglPlayground::Space::Local);
-    transform_->lookAt(center_, OglPlayground::Transform::worldUp);
-    
-    lastMouseX_ = x;
-    lastMouseY_ = y;
-  }
-  
-  void scrollEvent(GLFWwindow*, double x, double y) override {
-    glm::vec3 translation(0.f, 0.f, float(y));
-    distance_ += float(y);
-    transform_->translate(-translation, OglPlayground::Space::Local);
-  }
-
-private:
-  OglPlayground::Transform* transform_;
-
-  glm::vec3 center_;
-  float distance_ = 0.f;
-  glm::vec3 angles_;
-  float speed_ = .1f;
-
-  
-  double lastMouseX_ = 0.f;
-  double lastMouseY_ = 0.f;
-  bool pressed_ = false;
-};
-
-class TestBehavior : public OglPlayground::Behavior, public OglPlayground::noncopyable
+class TestBehavior : public TestApp::Behavior, public OglPlayground::noncopyable
 {
 public:
   TestBehavior() = default;
   ~TestBehavior() = default;
 
-  void setup(OglPlayground::Application* app) override;
+  void setup(TestApp::Application* app) override;
   void update(int width, int height) override;
-  void teardown(OglPlayground::Application* app) override;
+  void teardown(TestApp::Application* app) override;
 
 private:
   std::unique_ptr<OglPlayground::Geometry> geom_;
   std::unique_ptr<OglPlayground::GeometryBinder> geomBinder_;
   std::unique_ptr<OglPlayground::Program> program_;
   OglPlayground::Camera camera_;
-  std::unique_ptr<SphericalTransformController> sphericalController_;
+  std::unique_ptr<TestApp::SphericalController> sphericalController_;
   GLuint texture_ = 0;
 };
 
-void TestBehavior::setup(OglPlayground::Application* app)
+void TestBehavior::setup(TestApp::Application* app)
 {
   camera_.transform().translate(glm::vec3(0.f, 0.f, -5.f), OglPlayground::Space::Local);
-  sphericalController_.reset(new SphericalTransformController(&camera_.transform(), glm::vec3(0.f)));
+  sphericalController_.reset(new TestApp::SphericalController(&camera_.transform(), glm::vec3(0.f)));
 
   app->registerListener(sphericalController_.get());
   
@@ -244,24 +186,19 @@ void TestBehavior::update(int width, int height)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   program_->use();
-  glBindTexture(GL_TEXTURE_2D, texture_);
-  geomBinder_->bind();
-
-  glm::mat4 view(1.f);
-  GLfloat radius = 5.0f;
-  GLfloat camX = (GLfloat)sin(glfwGetTime()) * radius;
-  GLfloat camZ = (GLfloat)cos(glfwGetTime()) * radius;
-  //view = glm::lookAt(glm::vec3(radius, radius, radius), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-  view = camera_.transform().worldToLocalMatrix();
   
+  glm::mat4 view = camera_.transform().worldToLocalMatrix();
   glm::mat4 model(1.f);
   glm::mat4 mvp = camera_.projection()*view*model;
-  glUniformMatrix4fv(program_->desc("transform")->location, 1, GL_FALSE, glm::value_ptr(mvp));
+  program_->setUniform("transform", mvp);
+  glBindTexture(GL_TEXTURE_2D, texture_);
+  
+  geomBinder_->bind();
   geomBinder_->draw();
   geomBinder_->unbind();
 }
 
-void TestBehavior::teardown(OglPlayground::Application* app)
+void TestBehavior::teardown(TestApp::Application* app)
 {
   app->unregisterListener(sphericalController_.get());
   geomBinder_.reset(nullptr);
@@ -273,7 +210,7 @@ void TestBehavior::teardown(OglPlayground::Application* app)
 
 int main()
 {
-  OglPlayground::Application application;
+  TestApp::Application application;
   TestBehavior behavior;
   application.run(&behavior);
 }

@@ -7,7 +7,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-namespace OglPlayground
+namespace TestApp
 {
 
 class Application::Impl_
@@ -126,4 +126,4 @@ void Application::unregisterListener(InputListener* listener)
   impl_->listeners_.erase(listener);
 }
 
-} // namespace OglPlayground
+} // namespace TestApp

@@ -4,7 +4,7 @@
 
 struct GLFWwindow;
 
-namespace OglPlayground
+namespace TestApp
 {
 
 class InputListener
@@ -48,4 +48,4 @@ private:
   std::unique_ptr<Impl_> impl_;
 };
   
-} // namespace OglPlayground
+} // namespace TestApp

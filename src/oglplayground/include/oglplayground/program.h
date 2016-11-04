@@ -6,6 +6,8 @@
 
 #include <glad/glad.h>
 
+#include <glm/fwd.hpp>
+
 #include "noncopyable.h"
 
 namespace OglPlayground
@@ -34,10 +36,12 @@ public:
   bool isValid() const;
   void use() const;
 
-  const UniformDesc* desc(const std::string& name) const;
-  
+  const UniformDesc* desc(const char* name) const;
   // List returned in alphabetic order
   const std::vector<UniformDesc>& descs() const;
+
+  void setUniform(const char* name, float v);
+  void setUniform(const char* name, const glm::mat4& v);
   
 private:
   GLuint program_ = 0;

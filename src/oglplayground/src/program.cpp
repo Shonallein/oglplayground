@@ -1,7 +1,11 @@
 #include <oglplayground/program.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 #include <vector>
 
 namespace OglPlayground
@@ -159,20 +163,34 @@ void Program::use() const
   glUseProgram(program_);
 }
 
-const UniformDesc* Program::desc(const std::string& name) const
+const UniformDesc* Program::desc(const char* name) const
 {
   auto it = std::lower_bound(
       uniformsDesc_.cbegin(),
       uniformsDesc_.cend(),
       name,
-      [](const auto& elem, const auto& value) { return elem.name < value; });
-  if(it != uniformsDesc_.end()) return &(*it);
+      [](const auto& elem, const auto& value) { return strcmp(elem.name.data(), value) < 0; });
+  if(it != uniformsDesc_.end() && strcmp((*it).name.data(), name) == 0) return &(*it);
   return nullptr;
 }
     
 const std::vector<UniformDesc>& Program::descs() const
 {
   return uniformsDesc_;
+}
+
+void Program::setUniform(const char* name, float v) {
+  const UniformDesc* d = desc(name);
+  assert(d != nullptr);
+  if(d == nullptr) return;
+  glProgramUniform1fv(program_, d->location, 1, &v);
+}
+
+void Program::setUniform(const char* name, const glm::mat4& v) {
+  const UniformDesc* d = desc(name);
+  assert(d != nullptr);
+  if(d == nullptr) return;
+  glProgramUniformMatrix4fv(program_, d->location, 1, GL_FALSE, glm::value_ptr(v));
 }
 
 } //namespace oglPlayground
