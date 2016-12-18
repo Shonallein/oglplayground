@@ -47,10 +47,11 @@ if(NOT ${_res} EQUAL 0)
 endif()
 
 # Find thirdparties
+find_package(docopt REQUIRED)
 find_package(glfw3 REQUIRED)
-find_package(OpenGL REQUIRED)
 find_package(glm REQUIRED)
 find_package(gtest REQUIRED)
+find_package(OpenGL REQUIRED)
 
 enable_testing()
 

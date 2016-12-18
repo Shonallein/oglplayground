@@ -38,3 +38,12 @@ ExternalProject_Add(
   PATCH_COMMAND ""
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${THIRDPARTY_INSTALL_DIR} -Dgtest_force_shared_crt=ON
   )
+
+ExternalProject_Add(
+  docopt
+  GIT_REPOSITORY https://github.com/docopt/docopt.cpp.git
+  GIT_TAG v0.6.2
+  UPDATE_COMMAND ""
+  PATCH_COMMAND ""
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${THIRDPARTY_INSTALL_DIR}
+  )
