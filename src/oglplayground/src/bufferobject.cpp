@@ -33,4 +33,14 @@ void BufferObject::unbind() const
   glBindBuffer(target_, 0);
 }
 
+void* BufferObject::map(GLenum usage) const
+{
+  return glMapBuffer(target_, usage);
+}
+
+void BufferObject::unmap() const
+{
+  glUnmapBuffer(target_);
+}
+
 } // namespace OglPlayground

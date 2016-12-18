@@ -18,6 +18,8 @@ public:
   GLuint name() const;
   void bind() const;
   void unbind() const;
+  void* map(GLenum usage) const;
+  void unmap() const;
 
 private:
   GLenum target_ = 0;

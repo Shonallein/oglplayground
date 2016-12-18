@@ -7,6 +7,7 @@
 #include <stb/stb_image.h>
 
 #include "application.h"
+#include "gameoflifebehavior.h"
 #include "testbehavior.h"
 
 namespace
@@ -39,7 +40,7 @@ int main(int argc, const char** argv)
   if(args["test"].asBool()) {
     behavior.reset(new TestBehavior());
   } else if(args["gol"].asBool()) {
-    //behavior.reset(new GameOfLife());
+    behavior.reset(new GameOfLifeBehavior());
   }
   if(behavior == nullptr) return 1;
   
